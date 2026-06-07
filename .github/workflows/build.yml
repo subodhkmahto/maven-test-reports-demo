@@ -1,0 +1,46 @@
+name: Build and Test
+# GitHub Actions workflow ka naam
+
+on:
+  push:
+    branches:
+      - main
+# main branch par push hone par trigger hoga
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # fresh Ubuntu machine
+
+    steps:
+      - uses: actions/checkout@v4
+        # code checkout
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+        # Java 17 install
+
+      - name: Run Tests
+        run: mvn clean test
+        # saare JUnit tests run karo
+
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: target/surefire-reports
+        # test reports artifact mein save karo
+
+      - name: Build Docker Image
+        run: docker build -t 2017subodh2017/maven-test-reports-demo:latest .
+        # Docker image build karo
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u 2017subodh2017 --password-stdin
+        # Docker Hub par login karo — password sirf secret se aayega
+
+      - name: Push Docker Image to Docker Hub
+        run: docker push 2017subodh2017/maven-test-reports-demo:latest
+        # image Docker Hub par push karo
