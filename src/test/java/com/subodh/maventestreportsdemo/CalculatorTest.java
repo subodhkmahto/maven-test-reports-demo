@@ -32,6 +32,11 @@ public class CalculatorTest {
     void testDivision() {
         assertEquals(2.5, calculator.divide(5, 2));
     }
+    
+    @Test
+    void testModulus() {
+        assertEquals(1, calculator.modulus(10, 3));
+    }
 
     @Test
     void testDivideByZero() {
