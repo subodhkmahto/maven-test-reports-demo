@@ -52,6 +52,6 @@ public class CalculatorTest {
     }
     @Test 
     void testAdd() {
-    	assertEquals(9, calculator.add(7, 8));
+    	assertEquals(15, calculator.add(7, 8));
     }
 }
