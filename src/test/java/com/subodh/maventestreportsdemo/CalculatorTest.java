@@ -50,4 +50,8 @@ public class CalculatorTest {
     void testNegativeNumbers() {
         assertEquals(-1, calculator.add(-3, 2));
     }
+    @Test 
+    void testAdd() {
+    	assertEquals(9, calculator.add(7, 8));
+    }
 }
