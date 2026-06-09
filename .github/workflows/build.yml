@@ -41,6 +41,23 @@ jobs:
           docker push 2017subodh2017/maven-test-reports-demo:${SHORT_SHA}
           docker push 2017subodh2017/maven-test-reports-demo:latest
 
+      - name: Deploy to AWS EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker stop maven-app || true
+            docker rm maven-app || true
+            docker pull 2017subodh2017/maven-test-reports-demo:latest
+            docker run -d \
+              --name maven-app \
+              -p 8080:8080 \
+              --restart always \
+              2017subodh2017/maven-test-reports-demo:latest
+            echo "Deployment successful!"
+
 
 
 
