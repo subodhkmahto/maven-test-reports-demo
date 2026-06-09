@@ -54,4 +54,9 @@ public class CalculatorTest {
     void testAdd() {
     	assertEquals(15, calculator.add(7, 8));
     }
+    
+    @Test
+    void testMultiplication1() {
+    	assertEquals(3,calculator.multiply(3,1));
+    }
 }
