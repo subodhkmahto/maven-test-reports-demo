@@ -1,43 +1,56 @@
 name: Build and Test
+# Workflow ka naam jo GitHub Actions dashboard par dikhega
 
 on:
   push:
     branches:
       - main
+# Jaise hi main branch par code push hoga, yeh pipeline automatic shuru ho jayegi
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # GitHub hume ek fresh aur temporary Ubuntu machine dega poora task chalane ke liye
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        # Yeh step aapki repository ka saara code is temporary Ubuntu machine me copy karega
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+        # Ubuntu machine me Java 17 (Temurin distribution) install karega
 
       - name: Run Tests
         run: mvn clean test
+        # Maven ke zariye saare JUnit test cases run karega (Security Check)
 
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: target/surefire-reports
+        # Test reports ko artifact bankar GitHub par save karega jise baad me download kiya ja sake
 
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u 2017subodh2017 --password-stdin
+        # GitHub Secrets se password lekar aapke Docker Hub account me safely login karega
 
       - name: Build and Push Docker Image
         run: |
+          # 1. GitHub Commit ID se 7 characters ka short code (SHA) nikalne ke liye
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          
+          # 2. Multi-stage Dockerfile ka use karke image build karega (Dono tags: unique SHA aur latest ke sath)
           docker build \
             -t 2017subodh2017/maven-test-reports-demo:${SHORT_SHA} \
             -t 2017subodh2017/maven-test-reports-demo:latest \
             .
+          
+          # 3. Dono tags ko Docker Hub par push karega
           docker push 2017subodh2017/maven-test-reports-demo:${SHORT_SHA}
           docker push 2017subodh2017/maven-test-reports-demo:latest
 
@@ -48,13 +61,83 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            echo "AWS EC2 par deployment shuru ho gayi hai..."
+            
+            # 1. Agar 'maven-app' naam ka purana container chal raha hai, toh use stop aur delete karo
             docker stop maven-app || true
             docker rm maven-app || true
+            
+            # 2. Docker Hub se abhi push ki gayi fresh aur optimized Nginx image ko pull karo
             docker pull 2017subodh2017/maven-test-reports-demo:latest
-            docker run --rm \
+            
+            # 3. Nginx web server container ko continuous running mode (-d) me port 8080 par launch karo
+            docker run -d \
               --name maven-app \
+              -p 8080:80 \
+              --restart always \
               2017subodh2017/maven-test-reports-demo:latest
-            echo "Deployment successful!"
+            
+            echo "Deployment complete! Apne browser me check karein: http://YOUR_EC2_IP:8080"
+
+
+
+#name: Build and Test
+#
+#on:
+#  push:
+#    branches:
+#      - main
+#
+#jobs:
+#  build:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Checkout Code
+#        uses: actions/checkout@v4
+#
+#      - name: Setup Java 17
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: '17'
+#          distribution: 'temurin'
+#
+#      - name: Run Tests
+#        run: mvn clean test
+#
+#      - name: Upload Test Reports
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: test-reports
+#          path: target/surefire-reports
+#
+#      - name: Login to Docker Hub
+#        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u 2017subodh2017 --password-stdin
+#
+#      - name: Build and Push Docker Image
+#        run: |
+#          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+#          docker build \
+#            -t 2017subodh2017/maven-test-reports-demo:${SHORT_SHA} \
+#            -t 2017subodh2017/maven-test-reports-demo:latest \
+#            .
+#          docker push 2017subodh2017/maven-test-reports-demo:${SHORT_SHA}
+#          docker push 2017subodh2017/maven-test-reports-demo:latest
+#
+#      - name: Deploy to AWS EC2
+#        uses: appleboy/ssh-action@v1.0.3
+#        with:
+#          host: ${{ secrets.EC2_HOST }}
+#          username: ubuntu
+#          key: ${{ secrets.EC2_SSH_KEY }}
+#          script: |
+#            docker stop maven-app || true
+#            docker rm maven-app || true
+#            docker pull 2017subodh2017/maven-test-reports-demo:latest
+#            docker run --rm \
+#              --name maven-app \
+#              2017subodh2017/maven-test-reports-demo:latest
+#            echo "Deployment successful!"
 
 #name: Build and Test
 #
